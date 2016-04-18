@@ -11,3 +11,7 @@ npm run build
 cd example && npm start
 open http://localhost:8080
 ```
+
+### Demo
+
+http://teleport.github.io/react-dnd-treeview/example/dist/index.html
