@@ -1,0 +1,30 @@
+.treeView {
+  font-family: Verdana;
+  border-right: 1px solid gray;
+  border-bottom: 1px solid gray;
+}
+
+.nodeList {
+  border-left: 1px solid lightgray;
+  border-top: 1px solid lightgray;
+}
+
+.node {
+  border-bottom: 1px solid lightgray;
+}
+
+.nodeItem {
+  padding: 0.3em;
+}
+
+.nodePositioningWrapper:last-child > .node {
+  border-bottom: none;
+}
+
+.nodeDragging {
+  color: #eeeeee;
+}
+
+.nodeChildren {
+  padding-left: 2em;
+}
