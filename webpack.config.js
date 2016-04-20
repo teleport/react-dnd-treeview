@@ -16,12 +16,20 @@ module.exports = {
     library: 'react-dnd-treeview',
   },
   externals: [{
-    react: {
+    'classnames': 'classnames',
+    'immutable': {
+      root: 'Immutable',
+      commonjs2: 'immutable',
+      commonjs: 'immutable',
+      amd: 'immutable'
+    },
+    'react': {
       root: 'React',
       commonjs2: 'react',
       commonjs: 'react',
       amd: 'react'
     },
+    'react-dnd': 'react-dnd',
   }],
   resolve: {
     extensions: ['', '.js', '.jsx', '.ts', '.d.ts', '.tsx'],

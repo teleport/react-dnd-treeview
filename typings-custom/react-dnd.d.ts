@@ -3,7 +3,9 @@
 // Definitions by: Asana <https://asana.com>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-///<reference path='../react/react.d.ts' />
+// Modified to allow React stateless components as drag sources and drop targets
+
+/// <reference path='../typings/react/react.d.ts' />
 
 declare namespace __ReactDnd {
   import React = __React;

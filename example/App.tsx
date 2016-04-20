@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import Immutable from "immutable";
+import * as Immutable from "immutable";
 import { DragDropContext, Backend as DragDropBackend } from "react-dnd";
 const HTML5DragDropBackend = require("react-dnd-html5-backend") as DragDropBackend;
 const TouchDragDropBackend = require("react-dnd-touch-backend").default;
