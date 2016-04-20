@@ -1,14 +1,12 @@
 react-dnd-treeview
 =====================
 
-The minimal dev environment to enable live-editing React components.
+React tree view component with drag and drop support using react-dnd
 
 ### Usage
 
 ```
-npm install
-npm run build
-cd example && npm start
+cd example && npm install && npm start
 open http://localhost:8080
 ```
 
