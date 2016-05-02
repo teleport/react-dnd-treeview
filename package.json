@@ -9,7 +9,8 @@
     "dist/react-dnd-treeview.d.ts"
   ],
   "scripts": {
-    "build": "./node_modules/.bin/webpack"
+    "build": "./node_modules/.bin/webpack",
+    "watch": "./node_modules/.bin/webpack --watch"
   },
   "repository": {
     "type": "git",
