@@ -19,9 +19,7 @@ export interface TreeViewNode {
   readonly parentNodeID: NodeID;
   readonly parentChildIndex: number;
   readonly id: NodeID;
-  readonly title: string;
   readonly collapsed?: boolean;
-  readonly selected?: boolean;
   readonly children: Immutable.Iterable.Indexed<TreeViewNode>;
   readonly node: Node;
 }

@@ -5,9 +5,7 @@ export declare type NodeID = string;
 
 export declare interface Node {
   readonly id: NodeID;
-  readonly title: string;
   readonly collapsed?: boolean;
-  readonly selected?: boolean;
   readonly childIDs?: Immutable.List<NodeID>;
 }
 

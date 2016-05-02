@@ -8,6 +8,10 @@ import { NodeMap, Node, NodeID, TreeView } from "react-dnd-treeview";
 
 const styles = require("./styles.css");
 
+interface TestNode extends Node {
+  title: string;
+}
+
 interface AppState {
   nodes: NodeMap;
   rootNodeIDs: Immutable.List<NodeID>;
@@ -17,7 +21,7 @@ export class App extends Component<{}, AppState> {
   constructor() {
     super();
     this.state = {
-      nodes: Immutable.List<Node>([
+      nodes: Immutable.List<TestNode>([
         {
           id: "A",
           title: "A",
@@ -78,7 +82,7 @@ export class App extends Component<{}, AppState> {
           id: "C1zzz",
           title: "C1zzz",
         },
-      ] as Node[]).toKeyedSeq().mapKeys((_, node) => node.id).toMap(),
+      ] as TestNode[]).toKeyedSeq().mapKeys((_, node) => node.id).toMap(),
       rootNodeIDs: Immutable.List.of("A", "B", "C"),
     };
   }
@@ -122,7 +126,7 @@ export class App extends Component<{}, AppState> {
     });
   };
 
-  handleToggleCollapse = (node: Node) => {
+  handleToggleCollapse = (node: TestNode) => {
     this.setState(Object.assign({}, this.state, {
       nodes: this.state.nodes.update(node.id, oldNode => Object.assign({}, oldNode, {
         collapsed: !oldNode.collapsed,
@@ -130,7 +134,7 @@ export class App extends Component<{}, AppState> {
     }));
   };
 
-  renderNode = (node: Node) => (
+  renderNode = (node: TestNode) => (
     <div className={ styles.nodeItem }>
       { !node.childIDs || node.childIDs.isEmpty()
         ? null

@@ -29,9 +29,7 @@ function buildTreeViewNodeList(
         parentNodeID,
         parentChildIndex: index,
         id,
-        title: node.title,
         collapsed: node.collapsed,
-        selected: node.selected,
         children: buildTreeViewNodeList(nodes, node.childIDs, id),
       })
     )(nodes.get(id))
