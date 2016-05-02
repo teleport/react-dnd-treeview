@@ -38,7 +38,7 @@ module.exports = {
     loaders: [
       {
         test: /\.tsx?$/,
-        loaders: ['react-hot', 'babel', 'ts'],
+        loaders: ['babel', 'ts'],
         include: path.join(__dirname, 'src'),
       },
       {
