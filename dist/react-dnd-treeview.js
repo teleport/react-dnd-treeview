@@ -61,8 +61,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-api\\modules\\index.js"), RootInstanceProvider = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
-	
 	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -92,9 +90,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                parentNodeID: parentNodeID,
 	                parentChildIndex: index,
 	                id: id,
-	                title: node.title,
 	                collapsed: node.collapsed,
-	                selected: node.selected,
 	                children: buildTreeViewNodeList(nodes, node.childIDs, id)
 	            };
 	        }(nodes.get(id));
@@ -107,8 +103,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _react2.default.createElement(_Node.TreeViewItemList, { nodes: buildTreeViewNodeList(props.nodes, props.rootNodeIDs, null), renderNode: props.renderNode, classNames: props.classNames, onMoveNode: props.onMoveNode })
 	    );
 	};
-	
-	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "TreeView.tsx" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ },
 /* 2 */
@@ -126,8 +120,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-api\\modules\\index.js"), RootInstanceProvider = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
-	
 	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -187,8 +179,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	};
 	var DroppableTreeViewInsertTarget = exports.DroppableTreeViewInsertTarget = (0, _reactDnd.DropTarget)([_DraggedNode.TYPE], nodeTarget, collectNodeDropProps)(TreeViewInsertTarget);
-	
-	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "InsertTarget.tsx" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ },
 /* 5 */
@@ -204,18 +194,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-api\\modules\\index.js"), RootInstanceProvider = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
-	
 	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
 	var TYPE = exports.TYPE = "Node";
-	
-	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "DraggedNode.tsx" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ },
 /* 8 */
@@ -576,8 +562,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-api\\modules\\index.js"), RootInstanceProvider = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
-	
 	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -659,8 +643,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	    );
 	};
-	
-	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("C:\\Teleport\\src\\react-dnd-treeview\\node_modules\\react-hot-loader\\makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "Node.tsx" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ }
 /******/ ])
