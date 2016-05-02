@@ -48,6 +48,9 @@ module.exports = {
     contentBase: outputPath,
     publicPath,
     hot: true,
-    historyApiFallback: true
+    historyApiFallback: true,
+    stats: {
+      chunkModules: false,
+    },
   },
 };
