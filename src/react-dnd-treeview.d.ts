@@ -1,27 +1,33 @@
 import Immutable from "immutable";
 import React from "react";
 
-export declare type NodeID = string;
+export type TreeNodeID = string;
 
-export declare interface Node {
-  readonly id: NodeID;
-  readonly collapsed?: boolean;
-  readonly childIDs?: Immutable.List<NodeID>;
+export interface TreeNode {
+  readonly id: TreeNodeID;
+  readonly isCollapsed?: boolean;
+  readonly children?: TreeNodeList;
 }
 
-export declare type NodeMap = Immutable.Map<NodeID, Node>;
-
-export declare interface MoveNode {
-  (
-    oldParentNodeID: NodeID,
-    oldParentChildIndex: number,
-    nodeID: NodeID,
-    newParentNodeID: NodeID,
-    newParentChildIndex: number
-  ): void;
+export interface TreeNodeList {
+  readonly items: Immutable.Iterable<number, TreeNode>;
 }
 
-export declare interface TreeViewClassNames {
+export interface MoveTreeNodeArgs {
+  oldParentNode: TreeNode;
+  oldParentChildIndex: number;
+  oldPrecedingNode: TreeNode;
+  node: TreeNode;
+  newParentNode: TreeNode;
+  newParentChildIndex: number;
+  newPrecedingNode: TreeNode;
+}
+
+export interface MoveTreeNode {
+  (args: MoveTreeNodeArgs): void;
+}
+
+export interface TreeViewClassNames {
   readonly treeView: string;
   readonly nodeList: string;
   readonly node: string;
@@ -30,14 +36,13 @@ export declare interface TreeViewClassNames {
   readonly nodeChildren: string;
 }
 
-export declare interface TreeViewProps {
-  readonly nodes: NodeMap;
-  readonly rootNodeIDs: Immutable.Iterable.Indexed<NodeID>;
+export interface TreeViewProps {
+  readonly rootNodes: TreeNodeList;
 
   readonly classNames: TreeViewClassNames;
 
-  readonly renderNode: (node: Node) => JSX.Element;
-  readonly onMoveNode: MoveNode;
+  readonly renderNode: (node: TreeNode) => JSX.Element;
+  readonly onMoveNode: MoveTreeNode;
 }
 
-export declare const TreeView: React.Factory<TreeViewProps>;
+export const TreeView: React.Factory<TreeViewProps>;

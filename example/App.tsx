@@ -4,145 +4,193 @@ import { DragDropContext, Backend as DragDropBackend } from "react-dnd";
 const HTML5DragDropBackend = require("react-dnd-html5-backend") as DragDropBackend;
 const TouchDragDropBackend = require("react-dnd-touch-backend").default;
 
-import { NodeMap, Node, NodeID, TreeView } from "react-dnd-treeview";
+import { TreeNode, TreeNodeList, TreeNodeID, TreeView, MoveTreeNodeArgs } from "react-dnd-treeview";
 
 const styles = require("./styles.css");
 
-interface TestNode extends Node {
-  title: string;
+interface TestNode extends TreeNode {
+  readonly title: string;
+  readonly children?: TestNodeList;
 }
 
+interface TestNodeList extends TreeNodeList {
+  readonly items: Immutable.List<TestNode>;
+}
+
+const recursivelyUpdateNode = (
+  node: TestNode,
+  listUpdateFunc: (list: TestNodeList, parentNode: TreeNode) => TestNodeList,
+  nodeUpdateFunc: (node: TestNode) => TestNode
+) => {
+  const updateChildren = node.children
+    ? recursivelyUpdateList(node.children, node, listUpdateFunc, nodeUpdateFunc)
+    : node.children;
+  if (updateChildren !== node.children) {
+    node = Object.assign({}, node, {
+      children: updateChildren,
+    });
+  }
+  return nodeUpdateFunc(node);
+};
+
+const recursivelyUpdateList = (
+  list: TestNodeList,
+  parentNode: TreeNode,
+  listUpdateFunc: (list: TestNodeList, parentNode: TreeNode) => TestNodeList,
+  nodeUpdateFunc: (node: TestNode) => TestNode
+) => {
+  const mappedItems = list.items.map(item => recursivelyUpdateNode(item, listUpdateFunc, nodeUpdateFunc));
+  if (!Immutable.is(mappedItems, list.items)) {
+    list = Object.assign({}, list, {
+      items: mappedItems,
+    });
+  }
+  return listUpdateFunc(list, parentNode);
+};
+
+
+
 interface AppState {
-  nodes: NodeMap;
-  rootNodeIDs: Immutable.List<NodeID>;
+  rootNodes: TestNodeList;
 }
 
 export class App extends Component<{}, AppState> {
   constructor() {
     super();
     this.state = {
-      nodes: Immutable.List<TestNode>([
-        {
-          id: "A",
-          title: "A",
-          childIDs: Immutable.List.of("A1", "A2", "A3"),
-        },
-        {
-          id: "A1",
-          title: "A1",
-        },
-        {
-          id: "A2",
-          title: "A2",
-        },
-        {
-          id: "A3",
-          title: "A3",
-        },
-        {
-          id: "B",
-          title: "B",
-          childIDs: Immutable.List.of("B1", "B2"),
-        },
-        {
-          id: "B1",
-          title: "B1",
-        },
-        {
-          id: "B2",
-          title: "B2",
-        },
-        {
-          id: "C",
-          title: "C",
-          childIDs: Immutable.List.of("C1"),
-        },
-        {
-          id: "C1",
-          title: "C1",
-          childIDs: Immutable.List.of("C1x", "C1y", "C1z", "C1zz", "C1zzz"),
-        },
-        {
-          id: "C1x",
-          title: "C1x",
-        },
-        {
-          id: "C1y",
-          title: "C1y",
-        },
-        {
-          id: "C1z",
-          title: "C1z",
-        },
-        {
-          id: "C1zz",
-          title: "C1zz",
-        },
-        {
-          id: "C1zzz",
-          title: "C1zzz",
-        },
-      ] as TestNode[]).toKeyedSeq().mapKeys((_, node) => node.id).toMap(),
-      rootNodeIDs: Immutable.List.of("A", "B", "C"),
+      rootNodes: {
+        items: Immutable.List<TestNode>([
+          {
+            id: "A",
+            title: "A",
+            children: {
+              items: Immutable.List<TestNode>([
+                {
+                  id: "A1",
+                  title: "A1",
+                },
+                {
+                  id: "A2",
+                  title: "A2",
+                },
+                {
+                  id: "A3",
+                  title: "A3",
+                },
+              ]),
+            },
+          },
+          {
+            id: "B",
+            title: "B",
+            children: {
+              items: Immutable.List<TestNode>([
+                {
+                  id: "B1",
+                  title: "B1",
+                },
+                {
+                  id: "B2",
+                  title: "B2",
+                },
+              ]),
+            },
+          },
+          {
+            id: "C",
+            title: "C",
+            children: {
+              items: Immutable.List<TestNode>([
+                {
+                  id: "C1",
+                  title: "C1",
+                  children: {
+                    items: Immutable.List<TestNode>([
+                      {
+                        id: "C1x",
+                        title: "C1x",
+                      },
+                      {
+                        id: "C1y",
+                        title: "C1y",
+                      },
+                      {
+                        id: "C1z",
+                        title: "C1z",
+                      },
+                      {
+                        id: "C1zz",
+                        title: "C1zz",
+                      },
+                      {
+                        id: "C1zzz",
+                        title: "C1zzz",
+                      },
+                    ]),
+                  },
+                },
+              ]),
+            },
+          },
+        ]),
+      },
     };
   }
 
-  handleMoveNode = (parentNodeID: NodeID, parentChildIndex: number, nodeID: NodeID, newParentNodeID: NodeID, newParentChildIndex: number) => {
-    let nodes = this.state.nodes;
-    let rootNodeIDs = this.state.rootNodeIDs;
+  handleMoveNode = (args: MoveTreeNodeArgs) => {
+    this.setState(Object.assign({}, this.state, {
+      rootNodes: recursivelyUpdateList(
+        this.state.rootNodes,
+        null,
+        (list, parentNode) =>
+          parentNode === args.newParentNode && parentNode === args.oldParentNode
+            ? Object.assign({}, list, {
+              items:
+              list.items
+                .insert(args.newParentChildIndex, args.node as TestNode)
+                .remove(args.oldParentChildIndex + (args.newParentChildIndex < args.oldParentChildIndex ? 1 : 0))
+            })
+            : parentNode === args.newParentNode
+              ? Object.assign({}, list, {
+                items: list.items.insert(args.newParentChildIndex, args.node as TestNode)
+              })
+              : parentNode === args.oldParentNode
+                ? Object.assign({}, list, {
+                  items: list.items.remove(args.oldParentChildIndex)
+                })
+                : list,
+        item => item
+      ),
+    }));
+  };
 
-    const getParentChildIDs = (parentNodeID: NodeID) =>
-      parentNodeID === null
-        ? rootNodeIDs
-        : nodes.get(parentNodeID).childIDs;
-
-    const updateParentChildIDs = (parentNodeID: NodeID, childIDs: Immutable.List<NodeID>) => {
-      if (parentNodeID === null) {
-        rootNodeIDs = childIDs;
-      }
-      else {
-        nodes = nodes.update(parentNodeID, oldNode => Object.assign({}, oldNode, {
-          childIDs,
-        }));
-      }
-    }
-
-    if (newParentNodeID === parentNodeID) {
-      let childIDs = getParentChildIDs(parentNodeID).insert(newParentChildIndex, nodeID);
-      childIDs = childIDs.remove(
-        parentChildIndex +
-        (newParentChildIndex < parentChildIndex ? 1 : 0)
-      );
-      updateParentChildIDs(parentNodeID, childIDs);
-    }
-    else {
-      updateParentChildIDs(parentNodeID, getParentChildIDs(parentNodeID).remove(parentChildIndex));
-      updateParentChildIDs(newParentNodeID, getParentChildIDs(newParentNodeID).insert(newParentChildIndex, nodeID));
-    }
-
-    this.setState({
-      nodes,
-      rootNodeIDs,
-    });
+  setStateWithLog = (newState: AppState) => {
+    console.log("new state: ", newState);
+    this.setState(newState);
   };
 
   handleToggleCollapse = (node: TestNode) => {
-    this.setState(Object.assign({}, this.state, {
-      nodes: this.state.nodes.update(node.id, oldNode => Object.assign({}, oldNode, {
-        collapsed: !oldNode.collapsed,
-      })),
+    this.setStateWithLog(Object.assign({}, this.state, {
+      rootNodes: recursivelyUpdateList(
+        this.state.rootNodes,
+        null,
+        (list, parentNode) => list,
+        item => item === node ? Object.assign({}, item, {
+          isCollapsed: !item.isCollapsed,
+        }) : item
+      ),
     }));
   };
 
   renderNode = (node: TestNode) => (
     <div className={ styles.nodeItem }>
-      { !node.childIDs || node.childIDs.isEmpty()
+      { !node.children || node.children.items.isEmpty()
         ? null
         : <a
           style={{ fontSize: "0.5em", verticalAlign: "middle" }}
           onClick={ () => this.handleToggleCollapse(node) }
           >
-          {node.collapsed ? "⊕" : "⊖"}
+          {node.isCollapsed ? "⊕" : "⊖"}
         </a>
       }
       Node: { node.title }
@@ -152,8 +200,7 @@ export class App extends Component<{}, AppState> {
   render() {
     return (
       <TreeView
-        nodes={ this.state.nodes }
-        rootNodeIDs={ this.state.rootNodeIDs }
+        rootNodes={ this.state.rootNodes }
         classNames={ styles }
         renderNode={ this.renderNode }
         onMoveNode={ this.handleMoveNode }

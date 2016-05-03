@@ -65,7 +65,7 @@
 /******/ 	}
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "687c05ebdb8554a1bd41"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "17a7ba7eac863f45c7ac"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 /******/ 	
@@ -28129,6 +28129,26 @@
 	var TouchDragDropBackend = __webpack_require__(393).default;
 	
 	var styles = __webpack_require__(394);
+	var recursivelyUpdateNode = function recursivelyUpdateNode(node, listUpdateFunc, nodeUpdateFunc) {
+	    var updateChildren = node.children ? recursivelyUpdateList(node.children, node, listUpdateFunc, nodeUpdateFunc) : node.children;
+	    if (updateChildren !== node.children) {
+	        node = Object.assign({}, node, {
+	            children: updateChildren
+	        });
+	    }
+	    return nodeUpdateFunc(node);
+	};
+	var recursivelyUpdateList = function recursivelyUpdateList(list, parentNode, listUpdateFunc, nodeUpdateFunc) {
+	    var mappedItems = list.items.map(function (item) {
+	        return recursivelyUpdateNode(item, listUpdateFunc, nodeUpdateFunc);
+	    });
+	    if (!Immutable.is(mappedItems, list.items)) {
+	        list = Object.assign({}, list, {
+	            items: mappedItems
+	        });
+	    }
+	    return listUpdateFunc(list, parentNode);
+	};
 	
 	var App = exports.App = function (_Component) {
 	    _inherits(App, _Component);
@@ -28138,42 +28158,33 @@
 	
 	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(App).call(this));
 	
-	        _this.handleMoveNode = function (parentNodeID, parentChildIndex, nodeID, newParentNodeID, newParentChildIndex) {
-	            var nodes = _this.state.nodes;
-	            var rootNodeIDs = _this.state.rootNodeIDs;
-	            var getParentChildIDs = function getParentChildIDs(parentNodeID) {
-	                return parentNodeID === null ? rootNodeIDs : nodes.get(parentNodeID).childIDs;
-	            };
-	            var updateParentChildIDs = function updateParentChildIDs(parentNodeID, childIDs) {
-	                if (parentNodeID === null) {
-	                    rootNodeIDs = childIDs;
-	                } else {
-	                    nodes = nodes.update(parentNodeID, function (oldNode) {
-	                        return Object.assign({}, oldNode, {
-	                            childIDs: childIDs
-	                        });
-	                    });
-	                }
-	            };
-	            if (newParentNodeID === parentNodeID) {
-	                var childIDs = getParentChildIDs(parentNodeID).insert(newParentChildIndex, nodeID);
-	                childIDs = childIDs.remove(parentChildIndex + (newParentChildIndex < parentChildIndex ? 1 : 0));
-	                updateParentChildIDs(parentNodeID, childIDs);
-	            } else {
-	                updateParentChildIDs(parentNodeID, getParentChildIDs(parentNodeID).remove(parentChildIndex));
-	                updateParentChildIDs(newParentNodeID, getParentChildIDs(newParentNodeID).insert(newParentChildIndex, nodeID));
-	            }
-	            _this.setState({
-	                nodes: nodes,
-	                rootNodeIDs: rootNodeIDs
-	            });
+	        _this.handleMoveNode = function (args) {
+	            _this.setState(Object.assign({}, _this.state, {
+	                rootNodes: recursivelyUpdateList(_this.state.rootNodes, null, function (list, parentNode) {
+	                    return parentNode === args.newParentNode && parentNode === args.oldParentNode ? Object.assign({}, list, {
+	                        items: list.items.insert(args.newParentChildIndex, args.node).remove(args.oldParentChildIndex + (args.newParentChildIndex < args.oldParentChildIndex ? 1 : 0))
+	                    }) : parentNode === args.newParentNode ? Object.assign({}, list, {
+	                        items: list.items.insert(args.newParentChildIndex, args.node)
+	                    }) : parentNode === args.oldParentNode ? Object.assign({}, list, {
+	                        items: list.items.remove(args.oldParentChildIndex)
+	                    }) : list;
+	                }, function (item) {
+	                    return item;
+	                })
+	            }));
+	        };
+	        _this.setStateWithLog = function (newState) {
+	            console.log("new state: ", newState);
+	            _this.setState(newState);
 	        };
 	        _this.handleToggleCollapse = function (node) {
-	            _this.setState(Object.assign({}, _this.state, {
-	                nodes: _this.state.nodes.update(node.id, function (oldNode) {
-	                    return Object.assign({}, oldNode, {
-	                        collapsed: !oldNode.collapsed
-	                    });
+	            _this.setStateWithLog(Object.assign({}, _this.state, {
+	                rootNodes: recursivelyUpdateList(_this.state.rootNodes, null, function (list, parentNode) {
+	                    return list;
+	                }, function (item) {
+	                    return item === node ? Object.assign({}, item, {
+	                        isCollapsed: !item.isCollapsed
+	                    }) : item;
 	                })
 	            }));
 	        };
@@ -28181,68 +28192,75 @@
 	            return _react2.default.createElement(
 	                "div",
 	                { className: styles.nodeItem },
-	                !node.childIDs || node.childIDs.isEmpty() ? null : _react2.default.createElement(
+	                !node.children || node.children.items.isEmpty() ? null : _react2.default.createElement(
 	                    "a",
 	                    { style: { fontSize: "0.5em", verticalAlign: "middle" }, onClick: function onClick() {
 	                            return _this.handleToggleCollapse(node);
 	                        } },
-	                    node.collapsed ? "⊕" : "⊖"
+	                    node.isCollapsed ? "⊕" : "⊖"
 	                ),
 	                "Node: ",
 	                node.title
 	            );
 	        };
 	        _this.state = {
-	            nodes: Immutable.List([{
-	                id: "A",
-	                title: "A",
-	                childIDs: Immutable.List.of("A1", "A2", "A3")
-	            }, {
-	                id: "A1",
-	                title: "A1"
-	            }, {
-	                id: "A2",
-	                title: "A2"
-	            }, {
-	                id: "A3",
-	                title: "A3"
-	            }, {
-	                id: "B",
-	                title: "B",
-	                childIDs: Immutable.List.of("B1", "B2")
-	            }, {
-	                id: "B1",
-	                title: "B1"
-	            }, {
-	                id: "B2",
-	                title: "B2"
-	            }, {
-	                id: "C",
-	                title: "C",
-	                childIDs: Immutable.List.of("C1")
-	            }, {
-	                id: "C1",
-	                title: "C1",
-	                childIDs: Immutable.List.of("C1x", "C1y", "C1z", "C1zz", "C1zzz")
-	            }, {
-	                id: "C1x",
-	                title: "C1x"
-	            }, {
-	                id: "C1y",
-	                title: "C1y"
-	            }, {
-	                id: "C1z",
-	                title: "C1z"
-	            }, {
-	                id: "C1zz",
-	                title: "C1zz"
-	            }, {
-	                id: "C1zzz",
-	                title: "C1zzz"
-	            }]).toKeyedSeq().mapKeys(function (_, node) {
-	                return node.id;
-	            }).toMap(),
-	            rootNodeIDs: Immutable.List.of("A", "B", "C")
+	            rootNodes: {
+	                items: Immutable.List([{
+	                    id: "A",
+	                    title: "A",
+	                    children: {
+	                        items: Immutable.List([{
+	                            id: "A1",
+	                            title: "A1"
+	                        }, {
+	                            id: "A2",
+	                            title: "A2"
+	                        }, {
+	                            id: "A3",
+	                            title: "A3"
+	                        }])
+	                    }
+	                }, {
+	                    id: "B",
+	                    title: "B",
+	                    children: {
+	                        items: Immutable.List([{
+	                            id: "B1",
+	                            title: "B1"
+	                        }, {
+	                            id: "B2",
+	                            title: "B2"
+	                        }])
+	                    }
+	                }, {
+	                    id: "C",
+	                    title: "C",
+	                    children: {
+	                        items: Immutable.List([{
+	                            id: "C1",
+	                            title: "C1",
+	                            children: {
+	                                items: Immutable.List([{
+	                                    id: "C1x",
+	                                    title: "C1x"
+	                                }, {
+	                                    id: "C1y",
+	                                    title: "C1y"
+	                                }, {
+	                                    id: "C1z",
+	                                    title: "C1z"
+	                                }, {
+	                                    id: "C1zz",
+	                                    title: "C1zz"
+	                                }, {
+	                                    id: "C1zzz",
+	                                    title: "C1zzz"
+	                                }])
+	                            }
+	                        }])
+	                    }
+	                }])
+	            }
 	        };
 	        return _this;
 	    }
@@ -28250,7 +28268,7 @@
 	    _createClass(App, [{
 	        key: "render",
 	        value: function render() {
-	            return _react2.default.createElement(_reactDndTreeview.TreeView, { nodes: this.state.nodes, rootNodeIDs: this.state.rootNodeIDs, classNames: styles, renderNode: this.renderNode, onMoveNode: this.handleMoveNode });
+	            return _react2.default.createElement(_reactDndTreeview.TreeView, { rootNodes: this.state.rootNodes, classNames: styles, renderNode: this.renderNode, onMoveNode: this.handleMoveNode });
 	        }
 	    }]);
 	
@@ -39220,14 +39238,14 @@
 
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
-			module.exports = factory(__webpack_require__(139), __webpack_require__(245), __webpack_require__(361), __webpack_require__(246));
+			module.exports = factory(__webpack_require__(139), __webpack_require__(246), __webpack_require__(245), __webpack_require__(361));
 		else if(typeof define === 'function' && define.amd)
-			define(["react", "immutable", "classnames", "react-dnd"], factory);
+			define(["react", "react-dnd", "immutable", "classnames"], factory);
 		else if(typeof exports === 'object')
-			exports["react-dnd-treeview"] = factory(require("react"), require("immutable"), require("classnames"), require("react-dnd"));
+			exports["react-dnd-treeview"] = factory(require("react"), require("react-dnd"), require("immutable"), require("classnames"));
 		else
-			root["react-dnd-treeview"] = factory(root["React"], root["Immutable"], root["classnames"], root["react-dnd"]);
-	})(this, function(__WEBPACK_EXTERNAL_MODULE_2__, __WEBPACK_EXTERNAL_MODULE_3__, __WEBPACK_EXTERNAL_MODULE_5__, __WEBPACK_EXTERNAL_MODULE_6__) {
+			root["react-dnd-treeview"] = factory(root["React"], root["react-dnd"], root["Immutable"], root["classnames"]);
+	})(this, function(__WEBPACK_EXTERNAL_MODULE_2__, __WEBPACK_EXTERNAL_MODULE_4__, __WEBPACK_EXTERNAL_MODULE_8__, __WEBPACK_EXTERNAL_MODULE_9__) {
 	return /******/ (function(modules) { // webpackBootstrap
 	/******/ 	// The module cache
 	/******/ 	var installedModules = {};
@@ -39284,7 +39302,7 @@
 		"use strict";
 		
 		Object.defineProperty(exports, "__esModule", {
-		    value: true
+		      value: true
 		});
 		exports.TreeView = undefined;
 		
@@ -39292,36 +39310,18 @@
 		
 		var _react2 = _interopRequireDefault(_react);
 		
-		var _immutable = __webpack_require__(3);
+		__webpack_require__(3);
 		
-		var _immutable2 = _interopRequireDefault(_immutable);
-		
-		__webpack_require__(4);
-		
-		var _Node = __webpack_require__(12);
+		var _Node = __webpack_require__(7);
 		
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 		
-		function buildTreeViewNodeList(nodes, nodeIDs, parentNodeID) {
-		    return (nodeIDs || _immutable2.default.List()).map(function (id, index) {
-		        return function (node) {
-		            return {
-		                node: node,
-		                parentNodeID: parentNodeID,
-		                parentChildIndex: index,
-		                id: id,
-		                collapsed: node.collapsed,
-		                children: buildTreeViewNodeList(nodes, node.childIDs, id)
-		            };
-		        }(nodes.get(id));
-		    }).toIndexedSeq();
-		}
 		var TreeView = exports.TreeView = function TreeView(props) {
-		    return _react2.default.createElement(
-		        "div",
-		        { className: props.classNames.treeView },
-		        _react2.default.createElement(_Node.TreeViewItemList, { nodes: buildTreeViewNodeList(props.nodes, props.rootNodeIDs, null), renderNode: props.renderNode, classNames: props.classNames, onMoveNode: props.onMoveNode })
-		    );
+		      return _react2.default.createElement(
+		            "div",
+		            { className: props.classNames.treeView },
+		            _react2.default.createElement(_Node.TreeViewItemList, { parentNode: null, nodes: props.rootNodes, renderNode: props.renderNode, classNames: props.classNames, onMoveNode: props.onMoveNode })
+		      );
 		};
 	
 	/***/ },
@@ -39332,12 +39332,6 @@
 	
 	/***/ },
 	/* 3 */
-	/***/ function(module, exports) {
-	
-		module.exports = __WEBPACK_EXTERNAL_MODULE_3__;
-	
-	/***/ },
-	/* 4 */
 	/***/ function(module, exports, __webpack_require__) {
 	
 		"use strict";
@@ -39347,38 +39341,39 @@
 		});
 		exports.DroppableTreeViewInsertTarget = undefined;
 		
-		var _classnames2 = __webpack_require__(5);
-		
-		var _classnames3 = _interopRequireDefault(_classnames2);
-		
 		var _react = __webpack_require__(2);
 		
 		var _react2 = _interopRequireDefault(_react);
 		
-		var _reactDnd = __webpack_require__(6);
+		var _reactDnd = __webpack_require__(4);
 		
-		var _DraggedNode = __webpack_require__(7);
+		var _DraggedNode = __webpack_require__(5);
+		
+		var _InsertTargetStyles = __webpack_require__(6);
 		
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 		
-		function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-		
-		var styles = __webpack_require__(8);
 		var TreeViewInsertTarget = function TreeViewInsertTarget(props) {
-		    var _classnames;
-		
 		    return props.connectDropTarget(_react2.default.createElement(
 		        "div",
-		        { className: (0, _classnames3.default)(props.insertBefore ? styles.insertBeforeTarget : styles.insertAfterTarget, (_classnames = {}, _defineProperty(_classnames, styles.insertTargetCanDrop, props.canDrop), _defineProperty(_classnames, styles.insertTargetDropping, props.isDropping), _classnames)) },
-		        _react2.default.createElement("div", { className: styles.insertTargetMarker })
+		        { style: Object.assign({}, props.insertBefore ? _InsertTargetStyles.Styles.insertBeforeTarget : _InsertTargetStyles.Styles.insertAfterTarget, props.canDrop ? _InsertTargetStyles.Styles.insertTargetCanDrop : {}, props.isDropping ? _InsertTargetStyles.Styles.insertTargetDropping : {}) },
+		        _react2.default.createElement("div", { style: props.isDropping ? _InsertTargetStyles.Styles.insertTargetMarkerDropping : {} })
 		    ));
 		};
 		var handleCanDrop = function handleCanDrop(props, monitor, item) {
-		    return !(props.parentNodeID === item.parentNodeID && (props.parentChildIndex === item.parentChildIndex || props.parentChildIndex === item.parentChildIndex + 1)) && !item.allSourceIDs.contains(props.parentNodeID);
+		    return !(props.parentNode === item.parentNode && (props.parentChildIndex === item.parentChildIndex || props.parentChildIndex === item.parentChildIndex + 1)) && !item.allSourceIDs.contains(props.parentNode ? props.parentNode.id : null);
 		};
 		var handleDrop = function handleDrop(props, monitor, component, item) {
-		    return console.log("Dropped", monitor.getItem(), "before", props.parentNodeID, "child", props.parentChildIndex), props.onMoveNode(item.parentNodeID, item.parentChildIndex, item.sourceID, props.parentNodeID, props.parentChildIndex), {
-		        parentNodeID: props.parentNodeID,
+		    return props.onMoveNode({
+		        oldParentNode: item.parentNode,
+		        oldParentChildIndex: item.parentChildIndex,
+		        oldPrecedingNode: item.precedingNode,
+		        node: item.node,
+		        newParentNode: props.parentNode,
+		        newParentChildIndex: props.parentChildIndex,
+		        newPrecedingNode: props.precedingNode
+		    }), {
+		        parentNode: props.parentNode,
 		        parentChildIndex: props.parentChildIndex
 		    };
 		};
@@ -39401,19 +39396,13 @@
 		var DroppableTreeViewInsertTarget = exports.DroppableTreeViewInsertTarget = (0, _reactDnd.DropTarget)([_DraggedNode.TYPE], nodeTarget, collectNodeDropProps)(TreeViewInsertTarget);
 	
 	/***/ },
+	/* 4 */
+	/***/ function(module, exports) {
+	
+		module.exports = __WEBPACK_EXTERNAL_MODULE_4__;
+	
+	/***/ },
 	/* 5 */
-	/***/ function(module, exports) {
-	
-		module.exports = __WEBPACK_EXTERNAL_MODULE_5__;
-	
-	/***/ },
-	/* 6 */
-	/***/ function(module, exports) {
-	
-		module.exports = __WEBPACK_EXTERNAL_MODULE_6__;
-	
-	/***/ },
-	/* 7 */
 	/***/ function(module, exports) {
 	
 		"use strict";
@@ -39421,365 +39410,74 @@
 		Object.defineProperty(exports, "__esModule", {
 		  value: true
 		});
-		var TYPE = exports.TYPE = "Node";
+		var TYPE = exports.TYPE = "TreeNode";
 	
 	/***/ },
-	/* 8 */
-	/***/ function(module, exports, __webpack_require__) {
-	
-		// style-loader: Adds some css to the DOM by adding a <style> tag
-		
-		// load the styles
-		var content = __webpack_require__(9);
-		if(typeof content === 'string') content = [[module.id, content, '']];
-		// add the styles to the DOM
-		var update = __webpack_require__(11)(content, {});
-		if(content.locals) module.exports = content.locals;
-		// Hot Module Replacement
-		if(false) {
-			// When the styles change, update the <style> tags
-			if(!content.locals) {
-				module.hot.accept("!!./../node_modules/css-loader/index.js?modules&sourceMap&localIdentName=[name]__[local]___[hash:base64:5]!./styles.css", function() {
-					var newContent = require("!!./../node_modules/css-loader/index.js?modules&sourceMap&localIdentName=[name]__[local]___[hash:base64:5]!./styles.css");
-					if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-					update(newContent);
-				});
-			}
-			// When the module is disposed, remove the <style> tags
-			module.hot.dispose(function() { update(); });
-		}
-	
-	/***/ },
-	/* 9 */
-	/***/ function(module, exports, __webpack_require__) {
-	
-		exports = module.exports = __webpack_require__(10)();
-		// imports
-		
-		
-		// module
-		exports.push([module.id, ".styles__nodePositioningWrapper___3kWuO {\r\n  position: relative;\r\n}\r\n\r\n.styles__nodePositioningWrapper___3kWuO:hover {\r\n  /* otherwise drop targets interfere with drag start */\r\n  z-index: 2;\r\n}\r\n\r\n.styles__insertBeforeTarget___28T-u, .styles__insertAfterTarget___3OIXV {\r\n  box-sizing: border-box;\r\n  width: 100%;\r\n  height: 1em;\r\n  position: absolute;\r\n  z-index: 1;\r\n  display: none;\r\n}\r\n\r\n.styles__insertBeforeTarget___28T-u {\r\n  top: -0.5em;\r\n}\r\n\r\n.styles__insertAfterTarget___3OIXV {\r\n  bottom: -0.5em;\r\n}\r\n\r\n.styles__insertTargetCanDrop___1U760 {\r\n  display: flex;\r\n}\r\n\r\n.styles__insertTargetDropping___2_on4 .styles__insertTargetMarker___8V9Bh {\r\n  box-sizing: border-box;\r\n  width: 100%;\r\n  height: 3px;\r\n  border-radius: 2px;\r\n  background: linear-gradient(90deg, gray, white);\r\n  align-self: center;\r\n}\r\n\r\n/* Debugging */\r\n\r\n/*\r\n.insertBeforeTarget, .insertAfterTarget {\r\n  opacity: 0.5;\r\n}\r\n\r\n.insertTargetDropping {\r\n  opacity: 0.9;\r\n}\r\n\r\n.insertBeforeTarget {\r\n  background-color: #ffffdd;\r\n}\r\n\r\n.insertAfterTarget {\r\n  background-color: #ffddff;\r\n}\r\n*/\r\n", "", {"version":3,"sources":["/./src/styles.css"],"names":[],"mappings":"AAAA;EACE,mBAAmB;CACpB;;AAED;EACE,sDAAsD;EACtD,WAAW;CACZ;;AAED;EACE,uBAAuB;EACvB,YAAY;EACZ,YAAY;EACZ,mBAAmB;EACnB,WAAW;EACX,cAAc;CACf;;AAED;EACE,YAAY;CACb;;AAED;EACE,eAAe;CAChB;;AAED;EACE,cAAc;CACf;;AAED;EACE,uBAAuB;EACvB,YAAY;EACZ,YAAY;EACZ,mBAAmB;EACnB,gDAAgD;EAChD,mBAAmB;CACpB;;AAED,eAAe;;AAEf;;;;;;;;;;;;;;;;EAgBE","file":"styles.css","sourcesContent":[".nodePositioningWrapper {\r\n  position: relative;\r\n}\r\n\r\n.nodePositioningWrapper:hover {\r\n  /* otherwise drop targets interfere with drag start */\r\n  z-index: 2;\r\n}\r\n\r\n.insertBeforeTarget, .insertAfterTarget {\r\n  box-sizing: border-box;\r\n  width: 100%;\r\n  height: 1em;\r\n  position: absolute;\r\n  z-index: 1;\r\n  display: none;\r\n}\r\n\r\n.insertBeforeTarget {\r\n  top: -0.5em;\r\n}\r\n\r\n.insertAfterTarget {\r\n  bottom: -0.5em;\r\n}\r\n\r\n.insertTargetCanDrop {\r\n  display: flex;\r\n}\r\n\r\n.insertTargetDropping .insertTargetMarker {\r\n  box-sizing: border-box;\r\n  width: 100%;\r\n  height: 3px;\r\n  border-radius: 2px;\r\n  background: linear-gradient(90deg, gray, white);\r\n  align-self: center;\r\n}\r\n\r\n/* Debugging */\r\n\r\n/*\r\n.insertBeforeTarget, .insertAfterTarget {\r\n  opacity: 0.5;\r\n}\r\n\r\n.insertTargetDropping {\r\n  opacity: 0.9;\r\n}\r\n\r\n.insertBeforeTarget {\r\n  background-color: #ffffdd;\r\n}\r\n\r\n.insertAfterTarget {\r\n  background-color: #ffddff;\r\n}\r\n*/\r\n"],"sourceRoot":"webpack://"}]);
-		
-		// exports
-		exports.locals = {
-			"nodePositioningWrapper": "styles__nodePositioningWrapper___3kWuO",
-			"insertBeforeTarget": "styles__insertBeforeTarget___28T-u",
-			"insertAfterTarget": "styles__insertAfterTarget___3OIXV",
-			"insertTargetCanDrop": "styles__insertTargetCanDrop___1U760",
-			"insertTargetDropping": "styles__insertTargetDropping___2_on4",
-			"insertTargetMarker": "styles__insertTargetMarker___8V9Bh"
-		};
-	
-	/***/ },
-	/* 10 */
+	/* 6 */
 	/***/ function(module, exports) {
 	
-		/*
-			MIT License http://www.opensource.org/licenses/mit-license.php
-			Author Tobias Koppers @sokra
-		*/
-		// css base code, injected by the css-loader
-		module.exports = function() {
-			var list = [];
+		"use strict";
 		
-			// return the list of modules as css string
-			list.toString = function toString() {
-				var result = [];
-				for(var i = 0; i < this.length; i++) {
-					var item = this[i];
-					if(item[2]) {
-						result.push("@media " + item[2] + "{" + item[1] + "}");
-					} else {
-						result.push(item[1]);
-					}
-				}
-				return result.join("");
-			};
-		
-			// import a list of modules into the list
-			list.i = function(modules, mediaQuery) {
-				if(typeof modules === "string")
-					modules = [[null, modules, ""]];
-				var alreadyImportedModules = {};
-				for(var i = 0; i < this.length; i++) {
-					var id = this[i][0];
-					if(typeof id === "number")
-						alreadyImportedModules[id] = true;
-				}
-				for(i = 0; i < modules.length; i++) {
-					var item = modules[i];
-					// skip already imported module
-					// this implementation is not 100% perfect for weird media query combinations
-					//  when a module is imported multiple times with different media queries.
-					//  I hope this will never occur (Hey this way we have smaller bundles)
-					if(typeof item[0] !== "number" || !alreadyImportedModules[item[0]]) {
-						if(mediaQuery && !item[2]) {
-							item[2] = mediaQuery;
-						} else if(mediaQuery) {
-							item[2] = "(" + item[2] + ") and (" + mediaQuery + ")";
-						}
-						list.push(item);
-					}
-				}
-			};
-			return list;
-		};
-	
-	
-	/***/ },
-	/* 11 */
-	/***/ function(module, exports, __webpack_require__) {
-	
-		/*
-			MIT License http://www.opensource.org/licenses/mit-license.php
-			Author Tobias Koppers @sokra
-		*/
-		var stylesInDom = {},
-			memoize = function(fn) {
-				var memo;
-				return function () {
-					if (typeof memo === "undefined") memo = fn.apply(this, arguments);
-					return memo;
-				};
-			},
-			isOldIE = memoize(function() {
-				return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
-			}),
-			getHeadElement = memoize(function () {
-				return document.head || document.getElementsByTagName("head")[0];
-			}),
-			singletonElement = null,
-			singletonCounter = 0,
-			styleElementsInsertedAtTop = [];
-		
-		module.exports = function(list, options) {
-			if(false) {
-				if(typeof document !== "object") throw new Error("The style-loader cannot be used in a non-browser environment");
-			}
-		
-			options = options || {};
-			// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
-			// tags it will allow on a page
-			if (typeof options.singleton === "undefined") options.singleton = isOldIE();
-		
-			// By default, add <style> tags to the bottom of <head>.
-			if (typeof options.insertAt === "undefined") options.insertAt = "bottom";
-		
-			var styles = listToStyles(list);
-			addStylesToDom(styles, options);
-		
-			return function update(newList) {
-				var mayRemove = [];
-				for(var i = 0; i < styles.length; i++) {
-					var item = styles[i];
-					var domStyle = stylesInDom[item.id];
-					domStyle.refs--;
-					mayRemove.push(domStyle);
-				}
-				if(newList) {
-					var newStyles = listToStyles(newList);
-					addStylesToDom(newStyles, options);
-				}
-				for(var i = 0; i < mayRemove.length; i++) {
-					var domStyle = mayRemove[i];
-					if(domStyle.refs === 0) {
-						for(var j = 0; j < domStyle.parts.length; j++)
-							domStyle.parts[j]();
-						delete stylesInDom[domStyle.id];
-					}
-				}
-			};
-		}
-		
-		function addStylesToDom(styles, options) {
-			for(var i = 0; i < styles.length; i++) {
-				var item = styles[i];
-				var domStyle = stylesInDom[item.id];
-				if(domStyle) {
-					domStyle.refs++;
-					for(var j = 0; j < domStyle.parts.length; j++) {
-						domStyle.parts[j](item.parts[j]);
-					}
-					for(; j < item.parts.length; j++) {
-						domStyle.parts.push(addStyle(item.parts[j], options));
-					}
-				} else {
-					var parts = [];
-					for(var j = 0; j < item.parts.length; j++) {
-						parts.push(addStyle(item.parts[j], options));
-					}
-					stylesInDom[item.id] = {id: item.id, refs: 1, parts: parts};
-				}
-			}
-		}
-		
-		function listToStyles(list) {
-			var styles = [];
-			var newStyles = {};
-			for(var i = 0; i < list.length; i++) {
-				var item = list[i];
-				var id = item[0];
-				var css = item[1];
-				var media = item[2];
-				var sourceMap = item[3];
-				var part = {css: css, media: media, sourceMap: sourceMap};
-				if(!newStyles[id])
-					styles.push(newStyles[id] = {id: id, parts: [part]});
-				else
-					newStyles[id].parts.push(part);
-			}
-			return styles;
-		}
-		
-		function insertStyleElement(options, styleElement) {
-			var head = getHeadElement();
-			var lastStyleElementInsertedAtTop = styleElementsInsertedAtTop[styleElementsInsertedAtTop.length - 1];
-			if (options.insertAt === "top") {
-				if(!lastStyleElementInsertedAtTop) {
-					head.insertBefore(styleElement, head.firstChild);
-				} else if(lastStyleElementInsertedAtTop.nextSibling) {
-					head.insertBefore(styleElement, lastStyleElementInsertedAtTop.nextSibling);
-				} else {
-					head.appendChild(styleElement);
-				}
-				styleElementsInsertedAtTop.push(styleElement);
-			} else if (options.insertAt === "bottom") {
-				head.appendChild(styleElement);
-			} else {
-				throw new Error("Invalid value for parameter 'insertAt'. Must be 'top' or 'bottom'.");
-			}
-		}
-		
-		function removeStyleElement(styleElement) {
-			styleElement.parentNode.removeChild(styleElement);
-			var idx = styleElementsInsertedAtTop.indexOf(styleElement);
-			if(idx >= 0) {
-				styleElementsInsertedAtTop.splice(idx, 1);
-			}
-		}
-		
-		function createStyleElement(options) {
-			var styleElement = document.createElement("style");
-			styleElement.type = "text/css";
-			insertStyleElement(options, styleElement);
-			return styleElement;
-		}
-		
-		function createLinkElement(options) {
-			var linkElement = document.createElement("link");
-			linkElement.rel = "stylesheet";
-			insertStyleElement(options, linkElement);
-			return linkElement;
-		}
-		
-		function addStyle(obj, options) {
-			var styleElement, update, remove;
-		
-			if (options.singleton) {
-				var styleIndex = singletonCounter++;
-				styleElement = singletonElement || (singletonElement = createStyleElement(options));
-				update = applyToSingletonTag.bind(null, styleElement, styleIndex, false);
-				remove = applyToSingletonTag.bind(null, styleElement, styleIndex, true);
-			} else if(obj.sourceMap &&
-				typeof URL === "function" &&
-				typeof URL.createObjectURL === "function" &&
-				typeof URL.revokeObjectURL === "function" &&
-				typeof Blob === "function" &&
-				typeof btoa === "function") {
-				styleElement = createLinkElement(options);
-				update = updateLink.bind(null, styleElement);
-				remove = function() {
-					removeStyleElement(styleElement);
-					if(styleElement.href)
-						URL.revokeObjectURL(styleElement.href);
-				};
-			} else {
-				styleElement = createStyleElement(options);
-				update = applyToTag.bind(null, styleElement);
-				remove = function() {
-					removeStyleElement(styleElement);
-				};
-			}
-		
-			update(obj);
-		
-			return function updateStyle(newObj) {
-				if(newObj) {
-					if(newObj.css === obj.css && newObj.media === obj.media && newObj.sourceMap === obj.sourceMap)
-						return;
-					update(obj = newObj);
-				} else {
-					remove();
-				}
-			};
-		}
-		
-		var replaceText = (function () {
-			var textStore = [];
-		
-			return function (index, replacement) {
-				textStore[index] = replacement;
-				return textStore.filter(Boolean).join('\n');
-			};
-		})();
-		
-		function applyToSingletonTag(styleElement, index, remove, obj) {
-			var css = remove ? "" : obj.css;
-		
-			if (styleElement.styleSheet) {
-				styleElement.styleSheet.cssText = replaceText(index, css);
-			} else {
-				var cssNode = document.createTextNode(css);
-				var childNodes = styleElement.childNodes;
-				if (childNodes[index]) styleElement.removeChild(childNodes[index]);
-				if (childNodes.length) {
-					styleElement.insertBefore(cssNode, childNodes[index]);
-				} else {
-					styleElement.appendChild(cssNode);
-				}
-			}
-		}
-		
-		function applyToTag(styleElement, obj) {
-			var css = obj.css;
-			var media = obj.media;
-		
-			if(media) {
-				styleElement.setAttribute("media", media)
-			}
-		
-			if(styleElement.styleSheet) {
-				styleElement.styleSheet.cssText = css;
-			} else {
-				while(styleElement.firstChild) {
-					styleElement.removeChild(styleElement.firstChild);
-				}
-				styleElement.appendChild(document.createTextNode(css));
-			}
-		}
-		
-		function updateLink(linkElement, obj) {
-			var css = obj.css;
-			var sourceMap = obj.sourceMap;
-		
-			if(sourceMap) {
-				// http://stackoverflow.com/a/26603875
-				css += "\n/*# sourceMappingURL=data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + " */";
-			}
-		
-			var blob = new Blob([css], { type: "text/css" });
-		
-			var oldSrc = linkElement.href;
-		
-			linkElement.href = URL.createObjectURL(blob);
-		
-			if(oldSrc)
-				URL.revokeObjectURL(oldSrc);
-		}
-	
+		Object.defineProperty(exports, "__esModule", {
+		    value: true
+		});
+		var NormalStyles;
+		(function (NormalStyles) {
+		    NormalStyles.insertTarget = {
+		        boxSizing: "border-box",
+		        width: "100%",
+		        height: "1em",
+		        position: "absolute",
+		        zIndex: 1,
+		        display: "none"
+		    };
+		    NormalStyles.insertBeforeTarget = {
+		        top: "-0.5em"
+		    };
+		    NormalStyles.insertAfterTarget = {
+		        bottom: "-0.5em"
+		    };
+		    NormalStyles.insertTargetCanDrop = {
+		        display: "flex"
+		    };
+		    NormalStyles.insertTargetDropping = {};
+		    NormalStyles.insertTargetMarkerDropping = {
+		        boxSizing: "border-box",
+		        width: "100%",
+		        height: "3px",
+		        borderRadius: "2px",
+		        background: "linear-gradient(90deg, gray, white)",
+		        alignSelf: "center"
+		    };
+		})(NormalStyles || (NormalStyles = {}));
+		var DebugStyles;
+		(function (DebugStyles) {
+		    DebugStyles.insertTarget = {
+		        opacity: 0.5
+		    };
+		    DebugStyles.insertTargetCanDrop = {};
+		    DebugStyles.insertTargetDropping = {
+		        opacity: 0.9
+		    };
+		    DebugStyles.insertBeforeTarget = {
+		        backgroundColor: "#ffffdd"
+		    };
+		    DebugStyles.insertAfterTarget = {
+		        backgroundColor: "#ffddff"
+		    };
+		})(DebugStyles || (DebugStyles = {}));
+		var isDebug = false;
+		var Styles = exports.Styles = undefined;
+		(function (Styles) {
+		    Styles.insertBeforeTarget = Object.assign({}, NormalStyles.insertTarget, NormalStyles.insertBeforeTarget, isDebug ? DebugStyles.insertTarget : {}, isDebug ? DebugStyles.insertBeforeTarget : {});
+		    Styles.insertAfterTarget = Object.assign({}, NormalStyles.insertTarget, NormalStyles.insertAfterTarget, isDebug ? DebugStyles.insertTarget : {}, isDebug ? DebugStyles.insertAfterTarget : {});
+		    Styles.insertTargetCanDrop = Object.assign({}, NormalStyles.insertTargetCanDrop, isDebug ? DebugStyles.insertTargetCanDrop : {});
+		    Styles.insertTargetDropping = Object.assign({}, NormalStyles.insertTargetDropping, isDebug ? DebugStyles.insertTargetDropping : {});
+		    Styles.insertTargetMarkerDropping = NormalStyles.insertTargetMarkerDropping;
+		})(Styles || (exports.Styles = Styles = {}));
 	
 	/***/ },
-	/* 12 */
+	/* 7 */
 	/***/ function(module, exports, __webpack_require__) {
 	
 		"use strict";
@@ -39789,11 +39487,11 @@
 		});
 		exports.TreeViewItemList = exports.DraggableTreeViewItem = undefined;
 		
-		var _immutable = __webpack_require__(3);
+		var _immutable = __webpack_require__(8);
 		
 		var _immutable2 = _interopRequireDefault(_immutable);
 		
-		var _classnames2 = __webpack_require__(5);
+		var _classnames2 = __webpack_require__(9);
 		
 		var _classnames3 = _interopRequireDefault(_classnames2);
 		
@@ -39801,17 +39499,16 @@
 		
 		var _react2 = _interopRequireDefault(_react);
 		
-		var _reactDnd = __webpack_require__(6);
+		var _reactDnd = __webpack_require__(4);
 		
-		var _DraggedNode = __webpack_require__(7);
+		var _DraggedNode = __webpack_require__(5);
 		
-		var _InsertTarget = __webpack_require__(4);
+		var _InsertTarget = __webpack_require__(3);
 		
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 		
 		function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 		
-		var styles = __webpack_require__(8);
 		var TreeViewItem = function TreeViewItem(props) {
 		    return props.connectDragSource(_react2.default.createElement(
 		        "div",
@@ -39819,25 +39516,26 @@
 		        _react2.default.createElement(
 		            "div",
 		            null,
-		            props.renderNode(props.node.node)
+		            props.renderNode(props.node)
 		        ),
-		        props.node.collapsed ? null : _react2.default.createElement(
+		        props.node.isCollapsed ? null : _react2.default.createElement(
 		            "div",
 		            { className: props.classNames.nodeChildren },
-		            !props.node.children.isEmpty() ? _react2.default.createElement(TreeViewItemList, { nodes: props.node.children, classNames: props.classNames, renderNode: props.renderNode, onMoveNode: props.onMoveNode }) : null
+		            props.node.children ? _react2.default.createElement(TreeViewItemList, { parentNode: props.node, nodes: props.node.children, classNames: props.classNames, renderNode: props.renderNode, onMoveNode: props.onMoveNode }) : null
 		        )
 		    ));
 		};
 		var gatherNodeIDs = function gatherNodeIDs(node) {
-		    return _immutable2.default.Set.of(node.id).union(node.children.flatMap(gatherNodeIDs)).toSet();
+		    return _immutable2.default.Set.of(node.id).union(node.children ? node.children.items.flatMap(gatherNodeIDs) : _immutable2.default.List()).toSet();
 		};
 		var nodeSource = {
 		    beginDrag: function beginDrag(props, monitor, component) {
 		        return {
-		            sourceID: props.node.id,
+		            node: props.node,
 		            allSourceIDs: gatherNodeIDs(props.node),
-		            parentNodeID: props.node.parentNodeID,
-		            parentChildIndex: props.node.parentChildIndex
+		            parentNode: props.parentNode,
+		            parentChildIndex: props.parentChildIndex,
+		            precedingNode: props.precedingNode
 		        };
 		    }
 		};
@@ -39848,21 +39546,43 @@
 		    };
 		};
 		var DraggableTreeViewItem = exports.DraggableTreeViewItem = (0, _reactDnd.DragSource)(_DraggedNode.TYPE, nodeSource, collectNodeDragProps)(TreeViewItem);
+		var nodesWithPredecessors = function nodesWithPredecessors(nodes) {
+		    return nodes.toIndexedSeq().zipWith(function (node, predecessor) {
+		        return { node: node, precedingNode: predecessor };
+		    }, _immutable2.default.Seq.of(null).concat(nodes));
+		};
+		// TODO: add a mechanism to apply the CSS equivalent:
+		// .nodePositioningWrapper:hover {
+		//   /* otherwise drop targets interfere with drag start */
+		//   z-index: 2;
+		// }
 		var TreeViewItemList = exports.TreeViewItemList = function TreeViewItemList(props) {
 		    return _react2.default.createElement(
 		        "div",
 		        { className: props.classNames.nodeList },
-		        props.nodes.map(function (node, index) {
+		        nodesWithPredecessors(props.nodes.items).map(function (node, index) {
 		            return _react2.default.createElement(
 		                "div",
-		                { key: node.id, className: (0, _classnames3.default)(styles.nodePositioningWrapper, props.classNames.nodePositioningWrapper) },
-		                index === 0 ? _react2.default.createElement(_InsertTarget.DroppableTreeViewInsertTarget, { insertBefore: true, parentNodeID: node.parentNodeID, parentChildIndex: index, onMoveNode: props.onMoveNode }) : null,
-		                _react2.default.createElement(_InsertTarget.DroppableTreeViewInsertTarget, { insertBefore: false, parentNodeID: node.parentNodeID, parentChildIndex: index + 1, onMoveNode: props.onMoveNode }),
-		                _react2.default.createElement(DraggableTreeViewItem, { node: node, classNames: props.classNames, renderNode: props.renderNode, onMoveNode: props.onMoveNode })
+		                { key: node.node.id, style: { position: "relative" }, className: props.classNames.nodePositioningWrapper },
+		                index === 0 ? _react2.default.createElement(_InsertTarget.DroppableTreeViewInsertTarget, { insertBefore: true, parentNode: props.parentNode, parentChildIndex: index, precedingNode: null, onMoveNode: props.onMoveNode }) : null,
+		                _react2.default.createElement(_InsertTarget.DroppableTreeViewInsertTarget, { insertBefore: false, parentNode: props.parentNode, parentChildIndex: index + 1, precedingNode: node.node, onMoveNode: props.onMoveNode }),
+		                _react2.default.createElement(DraggableTreeViewItem, { parentNode: props.parentNode, parentChildIndex: index, precedingNode: node.precedingNode, node: node.node, classNames: props.classNames, renderNode: props.renderNode, onMoveNode: props.onMoveNode })
 		            );
 		        })
 		    );
 		};
+	
+	/***/ },
+	/* 8 */
+	/***/ function(module, exports) {
+	
+		module.exports = __WEBPACK_EXTERNAL_MODULE_8__;
+	
+	/***/ },
+	/* 9 */
+	/***/ function(module, exports) {
+	
+		module.exports = __WEBPACK_EXTERNAL_MODULE_9__;
 	
 	/***/ }
 	/******/ ])

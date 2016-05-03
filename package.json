@@ -36,10 +36,8 @@
     "babel-preset-react": "^6.0.15",
     "babel-preset-stage-0": "^6.0.15",
     "copy-webpack-plugin": "^2.1.1",
-    "css-loader": "^0.23.1",
     "eslint": "^1.10.3",
     "eslint-plugin-react": "^3.6.2",
-    "style-loader": "^0.13.1",
     "ts-loader": "^0.8.1",
     "typescript": "^1.9.0-dev.20160420",
     "webpack": "^1.12.2"

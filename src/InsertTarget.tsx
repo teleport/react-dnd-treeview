@@ -1,4 +1,3 @@
-import classnames from "classnames";
 import React from "react";
 import {
   DropTarget,
@@ -8,16 +7,16 @@ import {
   ConnectDropTarget,
 } from "react-dnd";
 
-import { NodeID, MoveNode } from "./react-dnd-treeview.d.ts";
+import { TreeNode, TreeNodeID, MoveTreeNode } from "./react-dnd-treeview.d.ts";
 import { TYPE, DraggedNode } from "./DraggedNode";
-
-const styles = require("./styles.css");
+import { Styles } from "./InsertTarget.styles.ts";
 
 export interface TreeViewInsertTargetProps {
-  readonly parentNodeID: NodeID;
+  readonly parentNode: TreeNode;
   readonly parentChildIndex: number;
+  readonly precedingNode: TreeNode;
   readonly insertBefore: boolean;
-  readonly onMoveNode: MoveNode;
+  readonly onMoveNode: MoveTreeNode;
 }
 
 interface TreeViewInsertTargetDropProps {
@@ -29,16 +28,16 @@ interface TreeViewInsertTargetDropProps {
 const TreeViewInsertTarget = (props: TreeViewInsertTargetProps & TreeViewInsertTargetDropProps) =>
   props.connectDropTarget(
     <div
-      className={
-        classnames(
-          props.insertBefore ? styles.insertBeforeTarget : styles.insertAfterTarget,
-          {
-            [styles.insertTargetCanDrop]: props.canDrop,
-            [styles.insertTargetDropping]: props.isDropping,
-          }
+      style={
+        Object.assign(
+          {},
+          props.insertBefore ? Styles.insertBeforeTarget : Styles.insertAfterTarget,
+          props.canDrop ? Styles.insertTargetCanDrop : {},
+          props.isDropping ? Styles.insertTargetDropping : {}
         )
-      }>
-      <div className={ styles.insertTargetMarker } />
+      }
+      >
+      <div style={ props.isDropping ? Styles.insertTargetMarkerDropping : {} } />
     </div>
   );
 
@@ -48,13 +47,13 @@ const handleCanDrop = (
   item: DraggedNode
 ) => (
     !(
-      props.parentNodeID === item.parentNodeID &&
+      props.parentNode === item.parentNode &&
       (
         props.parentChildIndex === item.parentChildIndex ||
         props.parentChildIndex === item.parentChildIndex + 1
       )
     ) &&
-    !item.allSourceIDs.contains(props.parentNodeID)
+    !item.allSourceIDs.contains(props.parentNode ? props.parentNode.id : null)
   );
 
 const handleDrop = (
@@ -63,16 +62,17 @@ const handleDrop = (
   component: React.Component<TreeViewInsertTargetProps, any>,
   item: DraggedNode
 ) => (
-    console.log("Dropped", monitor.getItem(), "before", props.parentNodeID, "child", props.parentChildIndex),
-    props.onMoveNode(
-      item.parentNodeID,
-      item.parentChildIndex,
-      item.sourceID,
-      props.parentNodeID,
-      props.parentChildIndex
-    ),
+    props.onMoveNode({
+      oldParentNode: item.parentNode,
+      oldParentChildIndex: item.parentChildIndex,
+      oldPrecedingNode: item.precedingNode,
+      node: item.node,
+      newParentNode: props.parentNode,
+      newParentChildIndex: props.parentChildIndex,
+      newPrecedingNode: props.precedingNode,
+    }),
     ({
-      parentNodeID: props.parentNodeID,
+      parentNode: props.parentNode,
       parentChildIndex: props.parentChildIndex,
     })
   );

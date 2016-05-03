@@ -9,26 +9,18 @@ import {
   ConnectDragSource,
 } from "react-dnd";
 
-import { Node, NodeID, MoveNode, TreeViewClassNames } from "./react-dnd-treeview.d.ts";
+import { TreeNode, TreeNodeID, TreeNodeList, MoveTreeNode, TreeViewClassNames } from "./react-dnd-treeview.d.ts";
 import { DraggedNode, TYPE } from "./DraggedNode";
 import { DroppableTreeViewInsertTarget } from "./InsertTarget";
 
-const styles = require("./styles.css");
-
-export interface TreeViewNode {
-  readonly parentNodeID: NodeID;
-  readonly parentChildIndex: number;
-  readonly id: NodeID;
-  readonly collapsed?: boolean;
-  readonly children: Immutable.Iterable.Indexed<TreeViewNode>;
-  readonly node: Node;
-}
-
 export interface TreeViewItemProps {
-  readonly node: TreeViewNode;
+  readonly parentNode: TreeNode;
+  readonly parentChildIndex: number;
+  readonly precedingNode: TreeNode;
+  readonly node: TreeNode;
   readonly classNames: TreeViewClassNames;
-  readonly renderNode: (node: Node) => JSX.Element;
-  readonly onMoveNode: MoveNode;
+  readonly renderNode: (node: TreeNode) => JSX.Element;
+  readonly onMoveNode: MoveTreeNode;
 }
 
 interface TreeViewItemDragProps {
@@ -47,15 +39,16 @@ const TreeViewItem: (props: TreeViewItemProps & TreeViewItemDragProps) => React.
         key={ props.node.id }
         >
         <div>
-          { props.renderNode(props.node.node) }
+          { props.renderNode(props.node) }
         </div>
         {
-          props.node.collapsed
+          props.node.isCollapsed
             ? null
             :
             <div className={ props.classNames.nodeChildren }>
-              { !props.node.children.isEmpty()
+              { props.node.children
                 ? <TreeViewItemList
+                  parentNode={ props.node }
                   nodes={ props.node.children }
                   classNames={ props.classNames }
                   renderNode={ props.renderNode }
@@ -68,15 +61,16 @@ const TreeViewItem: (props: TreeViewItemProps & TreeViewItemDragProps) => React.
     )
   );
 
-const gatherNodeIDs = (node: TreeViewNode): Immutable.Set<NodeID> =>
-  Immutable.Set.of(node.id).union(node.children.flatMap(gatherNodeIDs)).toSet();
+const gatherNodeIDs = (node: TreeNode): Immutable.Set<TreeNodeID> =>
+  Immutable.Set.of(node.id).union(node.children ? node.children.items.flatMap(gatherNodeIDs) : Immutable.List<string>()).toSet();
 
 const nodeSource: DragSourceSpec<TreeViewItemProps> = {
   beginDrag: (props, monitor, component) => ({
-    sourceID: props.node.id,
+    node: props.node,
     allSourceIDs: gatherNodeIDs(props.node),
-    parentNodeID: props.node.parentNodeID,
-    parentChildIndex: props.node.parentChildIndex,
+    parentNode: props.parentNode,
+    parentChildIndex: props.parentChildIndex,
+    precedingNode: props.precedingNode,
   } as DraggedNode),
 };
 
@@ -89,38 +83,61 @@ const collectNodeDragProps: (connect: DragSourceConnector, monitor: DragSourceMo
 export const DraggableTreeViewItem = DragSource(TYPE, nodeSource, collectNodeDragProps)(TreeViewItem);
 
 export interface TreeViewItemListProps {
-  readonly nodes: Immutable.Iterable.Indexed<TreeViewNode>;
-  readonly renderNode: (node: Node) => JSX.Element;
+  readonly parentNode: TreeNode;
+  readonly nodes: TreeNodeList;
+  readonly renderNode: (node: TreeNode) => JSX.Element;
   readonly classNames: TreeViewClassNames;
-  readonly onMoveNode: MoveNode;
+  readonly onMoveNode: MoveTreeNode;
 }
+
+const nodesWithPredecessors = (nodes: Immutable.Iterable<number, TreeNode>):
+  Immutable.Iterable<number, { node: TreeNode, precedingNode: TreeNode }> =>
+  nodes
+    .toIndexedSeq()
+    .zipWith(
+    (node, predecessor) => ({ node, precedingNode: predecessor }),
+    Immutable.Seq.of<TreeNode>(null)
+      .concat(nodes)
+    );
+
+// TODO: add a mechanism to apply the CSS equivalent:
+// .nodePositioningWrapper:hover {
+//   /* otherwise drop targets interfere with drag start */
+//   z-index: 2;
+// }
 
 export const TreeViewItemList = (props: TreeViewItemListProps) => (
   <div className={ props.classNames.nodeList }>
     {
-      props.nodes.map((node, index) =>
+      nodesWithPredecessors(props.nodes.items).map((node, index) =>
         <div
-          key={ node.id }
-          className={ classnames(styles.nodePositioningWrapper, props.classNames.nodePositioningWrapper) }
+          key={ node.node.id }
+          style={ { position: "relative" } }
+          className={ props.classNames.nodePositioningWrapper }
           >
           {
             index === 0
               ? <DroppableTreeViewInsertTarget
                 insertBefore={ true }
-                parentNodeID={ node.parentNodeID }
+                parentNode={ props.parentNode }
                 parentChildIndex={ index }
+                precedingNode={ null }
                 onMoveNode={ props.onMoveNode }
                 />
               : null
           }
           <DroppableTreeViewInsertTarget
             insertBefore={ false }
-            parentNodeID={ node.parentNodeID }
+            parentNode={ props.parentNode }
             parentChildIndex={ index + 1 }
+            precedingNode={ node.node }
             onMoveNode={ props.onMoveNode }
             />
           <DraggableTreeViewItem
-            node={ node }
+            parentNode={ props.parentNode }
+            parentChildIndex={ index }
+            precedingNode={ node.precedingNode }
+            node={ node.node }
             classNames={ props.classNames }
             renderNode={ props.renderNode }
             onMoveNode={ props.onMoveNode }

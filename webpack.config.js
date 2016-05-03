@@ -41,11 +41,6 @@ module.exports = {
         loaders: ['babel', 'ts'],
         include: path.join(__dirname, 'src'),
       },
-      {
-        test: /\.css?$/,
-        loaders: ['style', 'css?modules&sourceMap&localIdentName=[name]__[local]___[hash:base64:5]'],
-        include: path.join(__dirname, 'src')
-      },
     ]
   },
   plugins: [
