@@ -1,6 +1,6 @@
 {
   "name": "react-dnd-treeview",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Tree view component with drag and drop support using react-dnd",
   "main": "dist/react-dnd-treeview.js",
   "typings": "dist/react-dnd-treeview.d.ts",
