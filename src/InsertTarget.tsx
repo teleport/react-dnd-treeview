@@ -91,5 +91,5 @@ const collectNodeDropProps =
     isDropping: monitor.isOver({ shallow: true }) && monitor.canDrop(),
   });
 
-export const DroppableTreeViewInsertTarget =
+export const DroppableTreeViewInsertTarget: React.ComponentClass<TreeViewInsertTargetProps> =
   DropTarget([TYPE], nodeTarget, collectNodeDropProps)(TreeViewInsertTarget);

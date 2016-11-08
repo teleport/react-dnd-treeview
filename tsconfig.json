@@ -10,7 +10,6 @@
     "target": "es2015"
   },
   "files": [
-    "typings.d.ts",
     "src/react-dnd-treeview.d.ts",
     "src/TreeView.tsx"
   ]

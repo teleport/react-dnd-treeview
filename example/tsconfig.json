@@ -7,10 +7,15 @@
     "noImplicitAny": true,
     "outDir": "lib",
     "sourceMap": true,
-    "target": "es2015"
+    "target": "es2015",
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "files": [
-    "typings.d.ts",
     "./index.tsx"
   ]
 }

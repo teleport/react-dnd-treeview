@@ -283,7 +283,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        props.node.isCollapsed ? null : _react2.default.createElement(
 	            "div",
 	            { className: props.classNames.nodeChildren },
-	            props.node.children ? _react2.default.createElement(TreeViewItemList, { parentNode: props.node, nodes: props.node.children, classNames: props.classNames, renderNode: props.renderNode, onMoveNode: props.onMoveNode }) : null
+	            props.node.children && !props.node.children.items.isEmpty() ? _react2.default.createElement(TreeViewItemList, { parentNode: props.node, nodes: props.node.children ? props.node.children : { items: _immutable2.default.List() }, classNames: props.classNames, renderNode: props.renderNode, onMoveNode: props.onMoveNode }) : _react2.default.createElement(_InsertTarget.DroppableTreeViewInsertTarget, { insertBefore: false, parentNode: props.node, parentChildIndex: 0, precedingNode: null, onMoveNode: props.onMoveNode })
 	        )
 	    ));
 	};

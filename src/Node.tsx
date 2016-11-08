@@ -46,15 +46,21 @@ const TreeViewItem: (props: TreeViewItemProps & TreeViewItemDragProps) => React.
             ? null
             :
             <div className={ props.classNames.nodeChildren }>
-              { props.node.children
+              { props.node.children && !props.node.children.items.isEmpty()
                 ? <TreeViewItemList
                   parentNode={ props.node }
-                  nodes={ props.node.children }
+                  nodes={ props.node.children ? props.node.children : { items: Immutable.List<TreeNode>() } }
                   classNames={ props.classNames }
                   renderNode={ props.renderNode }
                   onMoveNode={ props.onMoveNode }
-                  />
-                : null }
+                  /> 
+                : <DroppableTreeViewInsertTarget
+                  insertBefore={ false }
+                  parentNode={ props.node }
+                  parentChildIndex={ 0 }
+                  precedingNode={ null }
+                  onMoveNode={ props.onMoveNode }
+                  /> }
             </div>
         }
       </div>
@@ -80,7 +86,8 @@ const collectNodeDragProps: (connect: DragSourceConnector, monitor: DragSourceMo
     isDragging: monitor.isDragging(),
   });
 
-export const DraggableTreeViewItem = DragSource(TYPE, nodeSource, collectNodeDragProps)(TreeViewItem);
+export const DraggableTreeViewItem: React.ComponentClass<TreeViewItemProps> = 
+  DragSource(TYPE, nodeSource, collectNodeDragProps)(TreeViewItem);
 
 export interface TreeViewItemListProps {
   readonly parentNode: TreeNode;

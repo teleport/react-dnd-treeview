@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import * as Immutable from "immutable";
 import { DragDropContext, Backend as DragDropBackend } from "react-dnd";
-const HTML5DragDropBackend = require("react-dnd-html5-backend") as DragDropBackend;
+import HTML5DragDropBackend from "react-dnd-html5-backend";
 const TouchDragDropBackend = require("react-dnd-touch-backend").default;
 
 import { TreeNode, TreeNodeList, TreeNodeID, TreeView, MoveTreeNodeArgs } from "react-dnd-treeview";
@@ -22,9 +22,8 @@ const recursivelyUpdateNode = (
   listUpdateFunc: (list: TestNodeList, parentNode: TreeNode) => TestNodeList,
   nodeUpdateFunc: (node: TestNode) => TestNode
 ) => {
-  const updateChildren = node.children
-    ? recursivelyUpdateList(node.children, node, listUpdateFunc, nodeUpdateFunc)
-    : node.children;
+  const children = node.children ? node.children : { items: Immutable.List<TestNode>() };
+  const updateChildren = recursivelyUpdateList(children, node, listUpdateFunc, nodeUpdateFunc);
   if (updateChildren !== node.children) {
     node = Object.assign({}, node, {
       children: updateChildren,
@@ -209,7 +208,7 @@ export class App extends Component<{}, AppState> {
   }
 }
 
-export const DraggableApp = DragDropContext(
+export const DraggableApp: React.ComponentClass<{}> = DragDropContext(
   HTML5DragDropBackend
   // TouchDragDropBackend({ enableMouseEvents: true })
 )(App);
