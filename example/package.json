@@ -9,8 +9,9 @@
     "dist/react-dnd-treeview.d.ts"
   ],
   "scripts": {
+    "build": "webpack",
     "open": "open http://localhost:8080/webpack-dev-server/ || start http://localhost:8080/webpack-dev-server/",
-    "start": "./node_modules/.bin/webpack-dev-server"
+    "start": "webpack-dev-server"
   },
   "repository": {
     "type": "git",
